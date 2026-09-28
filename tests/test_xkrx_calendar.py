@@ -1,9 +1,11 @@
 from datetime import date
+import warnings
 
 import pandas as pd
 import pytest
 
 from exchange_calendars.exchange_calendar_xkrx import XKRXExchangeCalendar
+from exchange_calendars.xkrx_holidays import LaborDay
 from .test_exchange_calendar import ExchangeCalendarTestBase
 from .test_utils import T
 
@@ -142,3 +144,13 @@ class TestXKRXCalendar(ExchangeCalendarTestBase):
     def test_feb_29_2022_in_lunar_calendar(self, default_calendar):
         # This test asserts that the following does not throw an exception.
         default_calendar.regular_holidays.holidays(date(2022, 3, 31), date(2022, 3, 31))
+
+    def test_observance_not_called_with_empty_index(self):
+        # A range that precedes a holiday's `start_date` leaves no reference
+        # dates. The observance should not then be called with an empty index
+        # in place of a Timestamp (#300).
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            dates = LaborDay.dates(T("2022-03-31"), T("2022-03-31"))
+        assert dates.empty
+        assert not w, [str(warning.message) for warning in w]

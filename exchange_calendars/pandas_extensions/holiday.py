@@ -103,7 +103,10 @@ class Holiday(PandasHoliday):
         return dates
 
     def _apply_observance(self, dates):
-        if self.observance is not None:
+        # NOTE: with pandas < 2.1 `DatetimeIndex.map` first tries passing the
+        # whole index to the mapper, which for an empty index calls the
+        # observance with an empty DatetimeIndex rather than a Timestamp (#300).
+        if self.observance is not None and not dates.empty:
             if not isinstance(self.observance, list):
                 observances = [self.observance]
             else:
